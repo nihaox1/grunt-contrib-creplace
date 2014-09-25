@@ -9,7 +9,13 @@ var sys,
 	E;
 
 E = function( x ){
-	grunt.log.writeln( x );
+	if( typeof x == "object" ){
+		for( var a in x ){
+			E( x[ a ] );
+		};
+	} else {
+		grunt.log.writeln( x );
+	};
 };
 
 Html = function( url ){
@@ -49,8 +55,11 @@ Html.fn.handle = function(){
 							replace( />\s+</gi , "><" );
 	this.config.html = _content;
 	this.config.html = tool.replace_css.call( this );
+	E( "js : " + this.config.url );
 	this.config.html = tool.replace_js.call( this );
+	E( "css : " + this.config.url );
 	grunt.file.write( this.config.dest , this.config.html );
+	E( "" );
 };
 
 tool = {
@@ -70,8 +79,12 @@ tool = {
 			/*!
 			 *	用户过滤目录中相同的资源文件
 			 */
-			resources 	: {}
+			resources 	: {},
+			ignoreUrl 	: []
 		};
+	},
+	getRandMd5 : function(){
+		return tool.md5( config.md5 + new Date().getTime() + parseInt( Math.random() * 999999999 ) );
 	},
 	md5 : function( str ){
 		var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase        */
@@ -286,6 +299,16 @@ tool = {
 
 		return hex_md5( str );
 	},
+	checkFileStatus : function( filePath , func ){
+		if( /\.[com|cn|net|org]/.test( filePath ) ){
+			for( var i = config.ignoreUrl.length; i--; ){
+				if( config.ignoreUrl[ i ].test( filePath ) ){
+					filePath = filePath.replace( config.ignoreUrl[ i ] , "$1" );
+				};
+			};
+		};
+		func( grunt.file.exists( config.dir.src_dir + filePath ) , filePath );
+	},
 	get_pub_file_path : function( dev_file_path ){
 		return dev_file_path.replace( /[\w|\d]*[\/|\\](.*)/gi , config.dir.pub_dir + "$1" );
 	},
@@ -336,6 +359,9 @@ tool = {
 		for( var i = _imgs.length; i--; ){
 			if( i % 2 ){
 				_img 	= tool.get_resource_path( _imgs[ i ].replace( /\'|\"*/gi , "" ) , dest );
+				if( !grunt.file.exists( _img ) ){
+					continue;
+				};
 				if( !config.resources[ _img ] ){
 					_md5 	= [
 						"resources/",
@@ -419,17 +445,24 @@ tool = {
 	 *	替换html文本中的 JS项
 	 */
 	replace_js : function(){
-		var _replace	= this.config.tp + "$1" + this.config.tp;
+		var _replace	= this.config.tp + "$1" + this.config.tp,
 			_al 		= this.config.html.replace( /(<script[^\\>]*src=[^\\>]*><\/script>)/gi , _replace ).split( this.config.tp ),
 			_js 		= [],
 			_url 		= "js/" + this.config.md5 + ".js";
 		for( var i = _al.length; i--; ){
 			if( i % 2 ){
-				_js.push( _al[ i ].replace( /.*src=['|"](.*)['|"].*/gi , "$1" ) );
-				_al[ i ] = i == 1 ? "<script type='text/javascript' src='" + _url + "'></script>" : "";
+				tool.checkFileStatus( _al[ i ].replace( /.*src=['|"](.*)['|"].*/gi , "$1" ) , function( exists , filePath ){
+					if( exists ){
+						_js.push( filePath );
+						_al[ i ] = "";
+					} else {
+						_al[ i ] = "<script type='text/javascript' src='" + filePath + "?" + tool.getRandMd5() + "'></script>";
+					};
+				} );
 			};
 		};
 		if( _js.length ){
+			_al[ 1 ] += "<script type='text/javascript' src='" + _url + "'></script>";
 			this.config.js = _js;
 			tool.uglify_js( this.config , config.dir.pub_dir + _url );
 			tool.concat_done( _js , this.config , config.dir.pub_dir + _url );
@@ -437,17 +470,24 @@ tool = {
 		return _al.join( "" );
 	},
 	replace_css: function(){
-		var _replace	= this.config.tp + "$1" + this.config.tp;
+		var _replace	= this.config.tp + "$1" + this.config.tp,
 			_al 		= this.config.html.replace( /(<link[^>]*>)/gi , _replace ).split( this.config.tp ),
 			_css 		= [],
 			_url 		= "css/" + this.config.md5 + ".css";
 		for( var i = _al.length; i--; ){
 			if( i % 2 ){
-				_css.push( _al[ i ].replace( /.*href=['|"](.*)['|"].*/gi , "$1" ) );
-				_al[ i ] = i == 1 ? "<link rel='stylesheet' type='text/css' href='" + _url + "'>" : "";
+				tool.checkFileStatus( _al[ i ].replace( /.*href=['|"](.*)['|"].*/gi , "$1" ) , function( exists , filePath ){
+					if( exists ){
+						_css.push( filePath );
+						_al[ i ] = "";
+					} else {
+						_al[ i ] = "<link rel='stylesheet' type='text/css' href='" + filePath + "?" + tool.getRandMd5() + "'>";
+					};
+				} );
 			};
 		};
 		if( _css.length ){
+			_al[ 1 ] += "<link rel='stylesheet' type='text/css' href='" + _url + "'>";
 			this.config.css = _css;
 			tool.uglify_css( this.config , config.dir.pub_dir + _url );
 			tool.concat_done( _css , this.config , config.dir.pub_dir + _url );
@@ -457,8 +497,7 @@ tool = {
 	get_html_files 	: function( dir ){
 		grunt.file.recurse( dir , function( path ){
 			if( /.*\.html$/gi.test( path ) ){
-				config.file_path.html[ path ] = true;
-				new Html( path );
+				config.file_path.html[ path ] = new Html( path );
 			} else if( /.*\.css$/gi.test( path ) ) {
 				config.file_path.css[ path ] = true;
 			} else if( /.*\.js$/gi.test( path ) ) {
@@ -474,6 +513,7 @@ tool = {
 				src_dir 	: file.src.toString(),
 				pub_dir 	: file.dest.toString()
 			};
+			config.ignoreUrl = file.ignoreUrl instanceof Array ? file.ignoreUrl : [ file.ignoreUrl ];
 			if( !grunt.file.isDir( config.dir.src_dir ) ){
 				return false;
 			};
