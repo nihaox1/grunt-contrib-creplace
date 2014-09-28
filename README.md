@@ -47,14 +47,14 @@ then  cmd like this
 
 done.
 
-###options mapping
-#type "src"
+#options mapping
+###type "src"
 your static files dir
 
-#type "dest"
+###type "dest"
 output dir 
 
-#type "ignoreUrl"
+###type "ignoreUrl"
 the url we don't make md5 name for...
 you can use it like array
 [ /xxx/ , /aaa/ , /fsa/ ] 
