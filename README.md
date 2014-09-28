@@ -3,13 +3,14 @@
 > Auto concat & compress & md5 fileName for your static files
 
 #Getting start
+```
 require nodejs & grunt
 you can get more infomation from :
 http://nodejs.org/
 http://npmjs.org/
 https://www.npmjs.org/package/grunt-contrib-creplace
 http://www.gruntjs.org/
-
+```
 
 #Sample example
 
