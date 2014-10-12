@@ -358,7 +358,7 @@ tool = {
 			_dest;
 		for( var i = _imgs.length; i--; ){
 			if( i % 2 ){
-				_img 	= tool.get_resource_path( _imgs[ i ].replace( /\'|\"*/gi , "" ) , dest );
+				_img 	= tool.get_resource_path( _imgs[ i ].replace( /[\'|\"|\s]*/gi , "" ) , dest );
 				if( !grunt.file.exists( _img ) ){
 					continue;
 				};
@@ -367,8 +367,7 @@ tool = {
 						"resources/",
 						tool.md5( config.md5 + new Date().getTime() + parseInt( Math.random() * 999999999 ) ),
 						_img.replace( /.*(\..*)$/gi , "$1" )
-					];
-					_md5 = _md5.join( "" )  
+					].join( "" );
 					config.resources[ _img ] = _md5;
 				} else {
 					_md5 = config.resources[ _img ];
