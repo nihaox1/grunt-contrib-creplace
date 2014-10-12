@@ -80,7 +80,8 @@ tool = {
 			 *	用户过滤目录中相同的资源文件
 			 */
 			resources 	: {},
-			ignoreUrl 	: []
+			ignoreUrl 	: [],
+			redirectOrigin : ""
 		};
 	},
 	getRandMd5 : function(){
@@ -461,7 +462,7 @@ tool = {
 			};
 		};
 		if( _js.length ){
-			_al[ 1 ] += "<script type='text/javascript' src='" + _url + "'></script>";
+			_al[ 1 ] += "<script type='text/javascript' src='" + config.redirectOrigin + _url + "'></script>";
 			this.config.js = _js;
 			tool.uglify_js( this.config , config.dir.pub_dir + _url );
 			tool.concat_done( _js , this.config , config.dir.pub_dir + _url );
@@ -486,7 +487,7 @@ tool = {
 			};
 		};
 		if( _css.length ){
-			_al[ 1 ] += "<link rel='stylesheet' type='text/css' href='" + _url + "'>";
+			_al[ 1 ] += "<link rel='stylesheet' type='text/css' href='" + config.redirectOrigin + _url + "'>";
 			this.config.css = _css;
 			tool.uglify_css( this.config , config.dir.pub_dir + _url );
 			tool.concat_done( _css , this.config , config.dir.pub_dir + _url );
@@ -512,6 +513,7 @@ tool = {
 				src_dir 	: file.src.toString(),
 				pub_dir 	: file.dest.toString()
 			};
+			config.redirectOrigin = file.redirectOrigin || "";
 			config.ignoreUrl = file.ignoreUrl instanceof Array ? file.ignoreUrl : [ file.ignoreUrl ];
 			if( !grunt.file.isDir( config.dir.src_dir ) ){
 				return false;
