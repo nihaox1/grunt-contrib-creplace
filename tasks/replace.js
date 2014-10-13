@@ -456,7 +456,7 @@ tool = {
 						_js.push( filePath );
 						_al[ i ] = "";
 					} else {
-						_al[ i ] = "<script type='text/javascript' src='" + filePath + "?" + tool.getRandMd5() + "'></script>";
+						_al[ i ] = "<script type='text/javascript' src='" + config.redirectOrigin + filePath + "?" + tool.getRandMd5() + "'></script>";
 					};
 				} );
 			};
