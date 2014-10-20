@@ -301,6 +301,8 @@ tool = {
 		return hex_md5( str );
 	},
 	checkFileStatus : function( filePath , func ){
+		var _isIgnore = false,
+			_exists;
 		if( /\.[com|cn|net|org]/.test( filePath ) ){
 			for( var i = config.ignoreUrl.length; i--; ){
 				if( config.ignoreUrl[ i ].test( filePath ) ){
@@ -308,7 +310,8 @@ tool = {
 				};
 			};
 		};
-		func( grunt.file.exists( config.dir.src_dir + filePath ) , filePath );
+		_exists = grunt.file.exists( config.dir.src_dir + filePath );
+		func( _exists , ( _isIgnore && !_exists ? config.redirectOrigin : "" ) + filePath );
 	},
 	get_pub_file_path : function( dev_file_path ){
 		return dev_file_path.replace( /[\w|\d]*[\/|\\](.*)/gi , config.dir.pub_dir + "$1" );
@@ -321,7 +324,7 @@ tool = {
 			grunt.file.write( _url( a ) , minjs.minify( a ).code.toString() );
 		};
 		for( var a in config.file_path.css ){
-			grunt.file.write( _url( a ) , new mincss( {} ).minify( grunt.file.read( a ) ) );
+			grunt.file.write( _url( a ) , new mincss( config.mincss ).minify( grunt.file.read( a ) ) );
 		};
 		for( var a in config.resources ){
 			grunt.file.copy( a , config.dir.pub_dir + config.resources[ a ] );
@@ -396,7 +399,7 @@ tool = {
 				_buffer.push( _code );
 			};
 		};
-		_code = new mincss( {} ).minify( _buffer.join( "" ) );
+		_code = new mincss( config.mincss ).minify( _buffer.join( "" ) );
 		grunt.file.write( dest , _code );
 	},
 	/*!
@@ -456,13 +459,13 @@ tool = {
 						_js.push( filePath );
 						_al[ i ] = "";
 					} else {
-						_al[ i ] = "<script type='text/javascript' src='" + config.redirectOrigin + filePath + "?" + tool.getRandMd5() + "'></script>";
+						_al[ i ] = "<script type='text/javascript' src='" + filePath + "?" + tool.getRandMd5() + "'></script>";
 					};
 				} );
 			};
 		};
 		if( _js.length ){
-			_al[ 1 ] += "<script type='text/javascript' src='" + config.redirectOrigin + _url + "'></script>";
+			_al[ _al.length - 2 ] += "<script type='text/javascript' src='" + config.redirectOrigin + _url + "'></script>";
 			this.config.js = _js;
 			tool.uglify_js( this.config , config.dir.pub_dir + _url );
 			tool.concat_done( _js , this.config , config.dir.pub_dir + _url );
@@ -513,8 +516,10 @@ tool = {
 				src_dir 	: file.src.toString(),
 				pub_dir 	: file.dest.toString()
 			};
-			config.redirectOrigin = file.redirectOrigin || "";
-			config.ignoreUrl = file.ignoreUrl instanceof Array ? file.ignoreUrl : [ file.ignoreUrl ];
+			config.ieHacker 		= file.isIeHacker;
+			config.redirectOrigin 	= file.redirectOrigin || "";
+			config.ignoreUrl 		= file.ignoreUrl instanceof Array ? file.ignoreUrl : [ file.ignoreUrl ];
+			config.mincss 			= file.isIeHacker ? { compatibility : "ie7" } : {};
 			if( !grunt.file.isDir( config.dir.src_dir ) ){
 				return false;
 			};
