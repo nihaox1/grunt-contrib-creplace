@@ -19,7 +19,7 @@ package.json
 {
     "devDependencies": {
         "grunt"                     : "~0.4.0",
-        "grunt-contrib-creplace"    : "~0.0.6"
+        "grunt-contrib-creplace"    : "~0.1.0"
     }
 }
 ```
