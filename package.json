@@ -1,7 +1,7 @@
 {
-    "name"            : "grunt-contrib-creplace",
+    "name"            : "grunt-creplace",
     "description"     : "Copy files and folders.",
-    "version"         : "0.1.4",
+    "version"         : "0.1.0",
     "homepage"        : "https://github.com/nihaox1/grunt-replace.git",
     "author"          : {
         "name"  : "Bo.Cheng",

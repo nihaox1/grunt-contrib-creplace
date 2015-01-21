@@ -323,14 +323,15 @@ tool = {
 		var _url = function( url ){
 				return config.dir.pub_dir + url.replace( /^[^\\|\/]*[\/|\\]/gi , "" )
 			};
+		// 	config.resources 放在后面会出现 config.resources被清空的清空
+		for( var a in config.resources ){
+			grunt.file.copy( a , config.dir.pub_dir + config.resources[ a ] );
+		}
 		for( var a in config.file_path.js ){
 			grunt.file.write( _url( a ) , minjs.minify( a ).code.toString() );
 		};
 		for( var a in config.file_path.css ){
 			grunt.file.write( _url( a ) , new mincss( config.mincss ).minify( grunt.file.read( a ) ) );
-		};
-		for( var a in config.resources ){
-			grunt.file.copy( a , config.dir.pub_dir + config.resources[ a ] );
 		};
 		for( var i = config.file_path.others.length; i--; ){
 			grunt.file.copy( config.file_path.others[ i ] , _url( config.file_path.others[ i ] ) );
