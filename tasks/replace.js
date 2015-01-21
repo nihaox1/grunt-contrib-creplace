@@ -74,7 +74,8 @@ tool = {
 				html 	: {},
 				css 	: {},
 				js 		: {},
-				others 	: []
+				others 	: [],
+				fetchUrl: {}
 			},
 			/*!
 			 *	用户过滤目录中相同的资源文件
@@ -306,7 +307,9 @@ tool = {
 		if( /\.[com|cn|net|org]/.test( filePath ) ){
 			for( var i = config.ignoreUrl.length; i--; ){
 				if( config.ignoreUrl[ i ].test( filePath ) ){
+					_isIgnore = true;
 					filePath = filePath.replace( config.ignoreUrl[ i ] , "$1" );
+					break;
 				};
 			};
 		};
@@ -445,6 +448,19 @@ tool = {
 		grunt.file.write( dest , _buffer.join( "" ) );
 	},
 	/*!
+	 *	 获取文件时间戳
+	 */
+	get_file_ts : function( filePath ){
+		var _ts = ( /\?/.test( filePath ) ? "&" : "?" ) + tool.getRandMd5();
+		for( var i = config.ignoreTsUrl.length; i--; ){
+			if( config.ignoreTsUrl[ i ].test( filePath ) ){
+				_ts = "";
+				break;
+			}
+		}
+		return filePath + _ts;
+	},
+	/*!
 	 *	替换html文本中的 JS项
 	 */
 	replace_js : function(){
@@ -454,12 +470,15 @@ tool = {
 			_url 		= "js/" + this.config.md5 + ".js";
 		for( var i = _al.length; i--; ){
 			if( i % 2 ){
-				tool.checkFileStatus( _al[ i ].replace( /.*src=['|"](.*)['|"].*/gi , "$1" ) , function( exists , filePath ){
+				tool.checkFileStatus( _al[ i ].replace( /.*src=['|"]([^'|^"]*)['|"].*/gi , "$1" ) , function( exists , filePath ){
 					if( exists ){
 						_js.push( filePath );
 						_al[ i ] = "";
 					} else {
-						_al[ i ] = "<script type='text/javascript' src='" + filePath + "?" + tool.getRandMd5() + "'></script>";
+						if( !config.file_path.fetchUrl[ filePath ] ){
+							config.file_path.fetchUrl[ filePath ] = tool.get_file_ts( filePath );
+						}
+						_al[ i ] = "<script type='text/javascript' src='" + config.file_path.fetchUrl[ filePath ] + "'></script>";
 					};
 				} );
 			};
@@ -484,7 +503,10 @@ tool = {
 						_css.push( filePath );
 						_al[ i ] = "";
 					} else {
-						_al[ i ] = "<link rel='stylesheet' type='text/css' href='" + filePath + "?" + tool.getRandMd5() + "'>";
+						if( !config.file_path.fetchUrl[ filePath ] ){
+							config.file_path.fetchUrl[ filePath ] = filePath + ( /\?/.test( filePath ) ? "&" : "?" ) + tool.getRandMd5();
+						}
+						_al[ i ] = "<link rel='stylesheet' type='text/css' href='" + config.file_path.fetchUrl[ filePath ] + "'>";
 					};
 				} );
 			};
@@ -519,6 +541,7 @@ tool = {
 			config.ieHacker 		= file.isIeHacker;
 			config.redirectOrigin 	= file.redirectOrigin || "";
 			config.ignoreUrl 		= file.ignoreUrl instanceof Array ? file.ignoreUrl : [ file.ignoreUrl ];
+			config.ignoreTsUrl 		= file.ignoreTsUrl instanceof Array ? file.ignoreTsUrl : [ file.ignoreTsUrl ];
 			config.mincss 			= file.isIeHacker ? { compatibility : "ie7" } : {};
 			if( !grunt.file.isDir( config.dir.src_dir ) ){
 				return false;
