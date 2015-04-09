@@ -54,11 +54,16 @@ Html.fn.handle = function(){
 						replace( /\s+/gi , " " ).
 							replace( />\s+</gi , "><" );
 	this.config.html = _content;
-	this.config.html = tool.replace_css.call( this );
-	this.config.html = tool.replace_js.call( this );
-	grunt.file.write( this.config.dest , this.config.html );
-	E( "page : " + this.config.url + " build success!" );
-	E( "" );
+	try {
+		this.config.html = tool.replace_css.call( this );
+		this.config.html = tool.replace_js.call( this );
+		grunt.file.write( this.config.dest , this.config.html );
+		E( "page : " + this.config.url + " build success!" );
+	} catch( e ){
+		E( "" );
+		E( "Error " + this.config.url + "; html page charset error..." );
+		E( "" );
+	}
 };
 
 tool = {
@@ -426,7 +431,11 @@ tool = {
 		for( var i = replace.js.length; i--; ){
 			_urls.push( config.dir.src_dir + replace.js[ i ] );
 		};
-		grunt.file.write( dest , minjs.minify( _urls ).code.toString() );
+		try{
+			grunt.file.write( dest , minjs.minify( _urls ).code.toString() );	
+		} catch( e ){
+			E( "Error : uglifyJS error. check js files " + _urls.join( " ; " ) );
+		}
 	},
 	/*!
 	 *	串联文件
